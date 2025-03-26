@@ -26,7 +26,7 @@
 #define SSID "CMLAB"
 #define PASSWORD "wificmlab"
 
-uint8_t RemoteIP[] = { 192, 168, 1, 31 };
+uint8_t RemoteIP[] = {192, 168, 1, 31};
 #define RemotePORT 8002
 
 #define WIFI_WRITE_TIMEOUT 10000
@@ -86,21 +86,11 @@ int main(void) {
 	SystemClock_Config();
 	/* Configure LED2 */
 
-	/* Setup Significant motion detection */
-//	TERMOUT("> Setup Significant Motion\n");
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x80);		// enable access to embedded function register (blank A)
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_SM_STEP_THS, 0x01);			// set threshold
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x00);		// disable access to embedded function register (blank A)
-//
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL1_XL, 0x20);				// ODR_XL=26hz, FS_XL=+-2g
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL10_C, 0x05);				// enable embedded function & significant motion detection
-//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_INT1_CTRL, 0x40);			// significant motion interrupt driven to INT1 pin
-
     /*Configure GPIO pins : ARD_D13_Pin ARD_D12_Pin ARD_D11_Pin */
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	__HAL_RCC_GPIOD_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
 
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
     /*Configure GPIO pin : PC13 */
     GPIO_InitStruct.Pin = GPIO_PIN_13;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -112,88 +102,83 @@ int main(void) {
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-
     HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 	BSP_LED_Init(LED2);
 	BSP_ACCELERO_Init();
 
-
 #if defined(TERMINAL_USE)
-	/* Initialize all configured peripherals */
-	hDiscoUart.Instance = DISCOVERY_COM1;
-	hDiscoUart.Init.BaudRate = 115200;
-	hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
-	hDiscoUart.Init.StopBits = UART_STOPBITS_1;
-	hDiscoUart.Init.Parity = UART_PARITY_NONE;
-	hDiscoUart.Init.Mode = UART_MODE_TX_RX;
-	hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
-	hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-	hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+    /* Initialize all configured peripherals */
+    hDiscoUart.Instance = DISCOVERY_COM1;
+    hDiscoUart.Init.BaudRate = 115200;
+    hDiscoUart.Init.WordLength = UART_WORDLENGTH_8B;
+    hDiscoUart.Init.StopBits = UART_STOPBITS_1;
+    hDiscoUart.Init.Parity = UART_PARITY_NONE;
+    hDiscoUart.Init.Mode = UART_MODE_TX_RX;
+    hDiscoUart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    hDiscoUart.Init.OverSampling = UART_OVERSAMPLING_16;
+    hDiscoUart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+    hDiscoUart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-	BSP_COM_Init(COM1, &hDiscoUart);
+    BSP_COM_Init(COM1, &hDiscoUart);
 #endif /* TERMINAL_USE */
 
-	TERMOUT("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
-	TERMOUT("TCP Client Instructions :\n");
-	TERMOUT("1- Make sure your Phone is connected to the same network that\n");
-	TERMOUT("   you configured using the Configuration Access Point.\n");
-	TERMOUT("2- Create a server by using the android application TCP Server\n");
-	TERMOUT("   with port(8002).\n");
-	TERMOUT(
-			"3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
+    TERMOUT("****** WIFI Module in TCP Client mode demonstration ****** \n\n");
+    TERMOUT("TCP Client Instructions :\n");
+    TERMOUT("1- Make sure your Phone is connected to the same network that\n");
+    TERMOUT("   you configured using the Configuration Access Point.\n");
+    TERMOUT("2- Create a server by using the android application TCP Server\n");
+    TERMOUT("   with port(8002).\n");
+    TERMOUT(
+	"3- Get the Network Name or IP Address of your Android from the step 2.\n\n");
 
-	/*Initialize  WIFI module */
-	if (WIFI_Init() == WIFI_STATUS_OK) {
-		TERMOUT("> WIFI Module Initialized.\n");
-		if (WIFI_GetMAC_Address(MAC_Addr, sizeof(MAC_Addr)) == WIFI_STATUS_OK) {
-			TERMOUT("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
-					MAC_Addr[0], MAC_Addr[1], MAC_Addr[2], MAC_Addr[3],
-					MAC_Addr[4], MAC_Addr[5]);
-		} else {
-			TERMOUT("> ERROR : CANNOT get MAC address\n");
-			BSP_LED_On(LED2);
-		}
-
-		if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
-			TERMOUT("> es-wifi module connected \n");
-			if (WIFI_GetIP_Address(IP_Addr, sizeof(IP_Addr))
-					== WIFI_STATUS_OK) {
-				TERMOUT("> es-wifi module got IP Address : %d.%d.%d.%d\n",
-						IP_Addr[0], IP_Addr[1], IP_Addr[2], IP_Addr[3]);
-
-				TERMOUT("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
-						RemoteIP[0], RemoteIP[1], RemoteIP[2], RemoteIP[3],
-						RemotePORT);
-
-				while (Trials--) {
-					if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL,
-							"TCP_CLIENT", RemoteIP, RemotePORT, 0)
-							== WIFI_STATUS_OK) {
-						TERMOUT("> TCP Connection opened successfully.\n");
-						Socket = 0;
-						break;
-					}
-				}
-				if (Socket == -1) {
-					TERMOUT("> ERROR : Cannot open Connection\n");
-					BSP_LED_On(LED2);
-				}
-			} else {
-				TERMOUT("> ERROR : es-wifi module CANNOT get IP address\n");
-				BSP_LED_On(LED2);
-			}
-		} else {
-			TERMOUT("> ERROR : es-wifi module NOT connected\n");
-			BSP_LED_On(LED2);
-		}
+    /*Initialize  WIFI module */
+    if (WIFI_Init() == WIFI_STATUS_OK) {
+	TERMOUT("> WIFI Module Initialized.\n");
+	if (WIFI_GetMAC_Address(MAC_Addr, sizeof(MAC_Addr)) == WIFI_STATUS_OK) {
+	    TERMOUT("> es-wifi module MAC Address : %X:%X:%X:%X:%X:%X\n",
+		    MAC_Addr[0], MAC_Addr[1], MAC_Addr[2], MAC_Addr[3],
+		    MAC_Addr[4], MAC_Addr[5]);
 	} else {
-		TERMOUT("> ERROR : WIFI Module cannot be initialized.\n");
-		BSP_LED_On(LED2);
+	    TERMOUT("> ERROR : CANNOT get MAC address\n");
+	    BSP_LED_On(LED2);
 	}
 
+	if (WIFI_Connect(SSID, PASSWORD, WIFI_ECN_WPA2_PSK) == WIFI_STATUS_OK) {
+	    TERMOUT("> es-wifi module connected \n");
+	    if (WIFI_GetIP_Address(IP_Addr, sizeof(IP_Addr)) == WIFI_STATUS_OK) {
+		TERMOUT("> es-wifi module got IP Address : %d.%d.%d.%d\n",
+			IP_Addr[0], IP_Addr[1], IP_Addr[2], IP_Addr[3]);
+
+		TERMOUT("> Trying to connect to Server: %d.%d.%d.%d:%d ...\n",
+			RemoteIP[0], RemoteIP[1], RemoteIP[2], RemoteIP[3],
+			RemotePORT);
+
+		while (Trials--) {
+		    if (WIFI_OpenClientConnection(0, WIFI_TCP_PROTOCOL,
+						  "TCP_CLIENT", RemoteIP, RemotePORT, 0) == WIFI_STATUS_OK) {
+			TERMOUT("> TCP Connection opened successfully.\n");
+			Socket = 0;
+			break;
+		    }
+		}
+		if (Socket == -1) {
+		    TERMOUT("> ERROR : Cannot open Connection\n");
+		    BSP_LED_On(LED2);
+		}
+	    } else {
+		TERMOUT("> ERROR : es-wifi module CANNOT get IP address\n");
+		BSP_LED_On(LED2);
+	    }
+	} else {
+	    TERMOUT("> ERROR : es-wifi module NOT connected\n");
+	    BSP_LED_On(LED2);
+	}
+    } else {
+	TERMOUT("> ERROR : WIFI Module cannot be initialized.\n");
+	BSP_LED_On(LED2);
+    }
 
 	isMotion = false;
 	while (1) {
@@ -245,40 +230,39 @@ int main(void) {
  * @retval None
  */
 static void SystemClock_Config(void) {
-	RCC_ClkInitTypeDef RCC_ClkInitStruct;
-	RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_OscInitTypeDef RCC_OscInitStruct;
 
-	/* MSI is enabled after System reset, activate PLL with MSI as source */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
-	RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-	RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
-	RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
-	RCC_OscInitStruct.PLL.PLLM = 1;
-	RCC_OscInitStruct.PLL.PLLN = 40;
-	RCC_OscInitStruct.PLL.PLLR = 2;
-	RCC_OscInitStruct.PLL.PLLP = 7;
-	RCC_OscInitStruct.PLL.PLLQ = 4;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-		/* Initialization Error */
-		while (1)
-			;
-	}
+    /* MSI is enabled after System reset, activate PLL with MSI as source */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_MSI;
+    RCC_OscInitStruct.MSIState = RCC_MSI_ON;
+    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+    RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_MSI;
+    RCC_OscInitStruct.PLL.PLLM = 1;
+    RCC_OscInitStruct.PLL.PLLN = 40;
+    RCC_OscInitStruct.PLL.PLLR = 2;
+    RCC_OscInitStruct.PLL.PLLP = 7;
+    RCC_OscInitStruct.PLL.PLLQ = 4;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+	/* Initialization Error */
+	while (1)
+	    ;
+    }
 
-	/* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
-	 clocks dividers */
-	RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK) {
-		/* Initialization Error */
-		while (1)
-			;
-	}
+    /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+     clocks dividers */
+    RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK) {
+	/* Initialization Error */
+	while (1)
+	    ;
+    }
 }
 
 #if defined(TERMINAL_USE)
@@ -288,11 +272,11 @@ static void SystemClock_Config(void) {
  * @retval None
  */
 PUTCHAR_PROTOTYPE {
-	/* Place your implementation of fputc here */
-	/* e.g. write a character to the USART1 and Loop until the end of transmission */
-	HAL_UART_Transmit(&hDiscoUart, (uint8_t*) &ch, 1, 0xFFFF);
+    /* Place your implementation of fputc here */
+    /* e.g. write a character to the USART1 and Loop until the end of transmission */
+    HAL_UART_Transmit(&hDiscoUart, (uint8_t *)&ch, 1, 0xFFFF);
 
-	return ch;
+    return ch;
 }
 #endif /* TERMINAL_USE */
 
@@ -343,5 +327,5 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 }
 
 void SPI3_IRQHandler(void) {
-	HAL_SPI_IRQHandler(&hspi);
+    HAL_SPI_IRQHandler(&hspi);
 }
