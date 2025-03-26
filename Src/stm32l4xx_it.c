@@ -137,3 +137,14 @@ void SysTick_Handler(void) {
 void EXTI1_IRQHandler(void) {
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
 }
+
+void EXTI15_10_IRQHandler(void) {
+	if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_13)) {
+//		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_13);
+		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+	} else if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_11)) {
+//		__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_11);
+		HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+	}
+}
+

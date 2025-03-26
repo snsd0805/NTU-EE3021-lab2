@@ -45,6 +45,7 @@ uint8_t RemoteIP[] = { 192, 168, 1, 31 };
 extern UART_HandleTypeDef hDiscoUart;
 #endif /* TERMINAL_USE */
 static uint8_t RxData[500];
+volatile bool isMotion;
 
 /* Private function prototypes -----------------------------------------------*/
 #if defined(TERMINAL_USE)
@@ -76,7 +77,7 @@ int main(void) {
 	uint16_t Datalen;
 	int32_t ret;
 	int16_t Trials = CONNECTION_TRIAL_MAX;
-	int16_t pDataXYZ[3];
+	int16_t pDataXYZ[4];
 
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
@@ -86,14 +87,14 @@ int main(void) {
 	/* Configure LED2 */
 
 	/* Setup Significant motion detection */
-	TERMOUT("> Setup Significant Motion\n");
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x80);		// enable access to embedded function register (blank A)
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_SM_STEP_THS, 0x01);			// set threshold
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x00);		// disable access to embedded function register (blank A)
-
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL1_XL, 0x20);				// ODR_XL=26hz, FS_XL=+-2g
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL10_C, 0x05);				// enable embedded function & significant motion detection
-	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_INT1_CTRL, 0x40);			// significant motion interrupt driven to INT1 pin
+//	TERMOUT("> Setup Significant Motion\n");
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x80);		// enable access to embedded function register (blank A)
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_SM_STEP_THS, 0x01);			// set threshold
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_FUNC_CFG_ACCESS, 0x00);		// disable access to embedded function register (blank A)
+//
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL1_XL, 0x20);				// ODR_XL=26hz, FS_XL=+-2g
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_CTRL10_C, 0x05);				// enable embedded function & significant motion detection
+//	SENSOR_IO_Write(LSM6DSL_ACC_GYRO_I2C_ADDRESS_LOW, LSM6DSL_ACC_GYRO_INT1_CTRL, 0x40);			// significant motion interrupt driven to INT1 pin
 
     /*Configure GPIO pins : ARD_D13_Pin ARD_D12_Pin ARD_D11_Pin */
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -114,7 +115,6 @@ int main(void) {
 
     HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-
 
 	BSP_LED_Init(LED2);
 	BSP_ACCELERO_Init();
@@ -195,15 +195,23 @@ int main(void) {
 	}
 
 
-
+	isMotion = false;
 	while (1) {
-		TERMOUT("Waiting...");
 
-		BSP_ACCELERO_AccGetXYZ(pDataXYZ);
+		if (isMotion) {
+			pDataXYZ[0] = 1;
+			isMotion = false;
+			ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
+					WIFI_WRITE_TIMEOUT);
+			if (ret != WIFI_STATUS_OK) {
+				TERMOUT("> ERROR : Failed to Send Data, connection closed\n");
+				BSP_LED_On(LED2);
+				break;
+			}
+		}
 
-		TERMOUT("XYZ data: (%d, %d, %d) \n\n", pDataXYZ[0], pDataXYZ[1], pDataXYZ[2]);
-
-
+		BSP_ACCELERO_AccGetXYZ(&pDataXYZ[1]);
+		pDataXYZ[0] = 0;
 
 		ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
 				WIFI_WRITE_TIMEOUT);
@@ -313,24 +321,24 @@ void assert_failed(uint8_t *file, uint32_t line) {
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	switch (GPIO_Pin) {
-	case (GPIO_PIN_1): {
-		SPI_WIFI_ISR();
-		break;
-	}
-	case (GPIO_PIN_11): {
-//		TERMOUT("> INTERRUPT\n");
-		HAL_GPIO_TogglePin(GPIOB, LED2_PIN);
-//		BSP_LED_On(LED2);
-		break;
-	}
-	default: {
-//		 TERMOUT("> INTERRUPT\n");
-		HAL_GPIO_TogglePin(GPIOB, LED2_PIN);
+		case (GPIO_PIN_1): {
+			 SPI_WIFI_ISR();
+			break;
+		}
+		case (GPIO_PIN_11): {
+			TERMOUT("> EXIT 11 INTERRUPT\n");
+			 isMotion = true;
+	//		BSP_LED_On(LED2);
+			break;
+		}
+		default: {
+			 TERMOUT("> EXTI 13 INTERRUPT\n");
+			// HAL_GPIO_TogglePin(GPIOB, LED2_PIN);
 
-//		BSP_LED_On(LED2);
+	//		BSP_LED_On(LED2);
 
-		break;
-	}
+			break;
+		}
 	}
 }
 

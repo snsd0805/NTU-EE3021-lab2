@@ -31,9 +31,15 @@ while True:
 
     while True:
         try:
-            data = client_sock.recv(6)
-            values = struct.unpack('<hhh', data)
-            print(values)
+            data = client_sock.recv(8)
+            values = struct.unpack('<hhhh', data)
+            # print(values[0], values[1:])
+            data_type = values[0]
+            values = values[1:]
+
+            if (data_type == 1):
+                print("Significant Motion Detected!!!")
+                    
 
             for bar, value in zip(bars, values):
                 bar.set_height(value)
