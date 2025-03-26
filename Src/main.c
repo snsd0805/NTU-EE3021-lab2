@@ -70,21 +70,21 @@ extern SPI_HandleTypeDef hspi;
  * @retval None
  */
 int main(void) {
-	uint8_t MAC_Addr[6] = { 0 };
-	uint8_t IP_Addr[4] = { 0 };
-	uint8_t TxData[] = "STM32 : Hello!\n";
-	int32_t Socket = -1;
-	uint16_t Datalen;
-	int32_t ret;
-	int16_t Trials = CONNECTION_TRIAL_MAX;
-	int16_t pDataXYZ[4];
+    uint8_t MAC_Addr[6] = {0};
+    uint8_t IP_Addr[4] = {0};
+    uint8_t TxData[] = "STM32 : Hello!\n";
+    int32_t Socket = -1;
+    uint16_t Datalen;
+    int32_t ret;
+    int16_t Trials = CONNECTION_TRIAL_MAX;
+    int16_t pDataXYZ[4];
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+    /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+    HAL_Init();
 
-	/* Configure the system clock */
-	SystemClock_Config();
-	/* Configure LED2 */
+    /* Configure the system clock */
+    SystemClock_Config();
+    /* Configure LED2 */
 
     /*Configure GPIO pins : ARD_D13_Pin ARD_D12_Pin ARD_D11_Pin */
     __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -105,8 +105,8 @@ int main(void) {
     HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-	BSP_LED_Init(LED2);
-	BSP_ACCELERO_Init();
+    BSP_LED_Init(LED2);
+    BSP_ACCELERO_Init();
 
 #if defined(TERMINAL_USE)
     /* Initialize all configured peripherals */
@@ -180,34 +180,34 @@ int main(void) {
 	BSP_LED_On(LED2);
     }
 
-	isMotion = false;
-	while (1) {
+    isMotion = false;
+    while (1) {
 
-		if (isMotion) {
-			pDataXYZ[0] = 1;
-			isMotion = false;
-			ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
-					WIFI_WRITE_TIMEOUT);
-			if (ret != WIFI_STATUS_OK) {
-				TERMOUT("> ERROR : Failed to Send Data, connection closed\n");
-				BSP_LED_On(LED2);
-				break;
-			}
-		}
-
-		BSP_ACCELERO_AccGetXYZ(&pDataXYZ[1]);
-		pDataXYZ[0] = 0;
-
-		ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
+	if (isMotion) {
+	    pDataXYZ[0] = 1;
+	    isMotion = false;
+	    ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
 				WIFI_WRITE_TIMEOUT);
-		if (ret != WIFI_STATUS_OK) {
-			TERMOUT("> ERROR : Failed to Send Data, connection closed\n");
-			BSP_LED_On(LED2);
-			break;
-		} else {
-			HAL_Delay(100);
-		}
+	    if (ret != WIFI_STATUS_OK) {
+		TERMOUT("> ERROR : Failed to Send Data, connection closed\n");
+		BSP_LED_On(LED2);
+		break;
+	    }
 	}
+
+	BSP_ACCELERO_AccGetXYZ(&pDataXYZ[1]);
+	pDataXYZ[0] = 0;
+
+	ret = WIFI_SendData(Socket, pDataXYZ, sizeof(pDataXYZ), &Datalen,
+			    WIFI_WRITE_TIMEOUT);
+	if (ret != WIFI_STATUS_OK) {
+	    TERMOUT("> ERROR : Failed to Send Data, connection closed\n");
+	    BSP_LED_On(LED2);
+	    break;
+	} else {
+	    HAL_Delay(100);
+	}
+    }
 }
 
 /**
@@ -304,26 +304,26 @@ void assert_failed(uint8_t *file, uint32_t line) {
  * @retval None
  */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	switch (GPIO_Pin) {
-		case (GPIO_PIN_1): {
-			 SPI_WIFI_ISR();
-			break;
-		}
-		case (GPIO_PIN_11): {
-			TERMOUT("> EXIT 11 INTERRUPT\n");
-			 isMotion = true;
+    switch (GPIO_Pin) {
+    case (GPIO_PIN_1): {
+	SPI_WIFI_ISR();
+	break;
+    }
+    case (GPIO_PIN_11): {
+	TERMOUT("> EXIT 11 INTERRUPT\n");
+	isMotion = true;
 	//		BSP_LED_On(LED2);
-			break;
-		}
-		default: {
-			 TERMOUT("> EXTI 13 INTERRUPT\n");
-			// HAL_GPIO_TogglePin(GPIOB, LED2_PIN);
+	break;
+    }
+    default: {
+	TERMOUT("> EXTI 13 INTERRUPT\n");
+	// HAL_GPIO_TogglePin(GPIOB, LED2_PIN);
 
 	//		BSP_LED_On(LED2);
 
-			break;
-		}
-	}
+	break;
+    }
+    }
 }
 
 void SPI3_IRQHandler(void) {
